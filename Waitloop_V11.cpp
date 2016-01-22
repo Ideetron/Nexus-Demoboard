@@ -1,0 +1,91 @@
+/******************************************************************************************
+*
+* File:        Waitloop_V11.cpp
+* Author:      Gerben den Hartog
+* Compagny:    Ideetron B.V.
+* Website:     http://www.ideetron.nl/LoRa
+* E-mail:      info@ideetron.nl
+******************************************************************************************/
+
+/****************************************************************************************
+*
+* Created on: 			  20-11-2015
+* Supported Hardware: ID150119-02 Nexus board with RFM95
+*
+* History:
+*
+* Firmware version: 1.0
+* First version
+* 
+* Firmware version: 1.1
+* Removed a bug from the waitloop file
+****************************************************************************************/
+
+/*
+*****************************************************************************************
+* INCLUDE FILES
+*****************************************************************************************
+*/
+
+#include "Arduino.h"
+#include "Waitloop_V11.h"
+
+
+/*
+*****************************************************************************************
+* Description  : Initialize Timer2
+*****************************************************************************************
+*/
+void WaitLoop_Init()
+{
+  //Initialize timer 1
+  //Set timer 0 to normal operation
+  TCCR1A = 0x00;
+  //Set prescaler to 256
+  TCCR1B = 0x04;
+  //Switch of interrupts
+  TIMSK1 = 0x00;
+  //Set Comperator registr ot 0.1 s
+  OCR1A = 0x186A;
+
+  //Initialize timer 2  
+  ASSR = 0x00;
+  //Switch of interrupts
+  TIMSK2 = 0x00;
+  //Set timer 2 to normal operation
+  TCCR2A = 0x00;
+  //Set prescaler to 1:64
+  TCCR2B = 0x04;
+  //Set Comperator register to 1 ms
+  OCR2A = 0xFA;
+}
+
+
+/*
+*****************************************************************************************
+* Description	: Waitloop for waiting a given number of miliseconds
+*
+* Arguments		: ms number of milisecond to wait
+*****************************************************************************************
+*/
+void WaitLoop(unsigned char ms)
+{
+  unsigned char Counter = 0x00;
+
+  //Clear Timer 2
+  TCNT2 = 0x00;
+  //Clear compare flag
+  TIFR2 = 0x02;
+
+  while(Counter < ms)
+  {
+    if((TIFR2 & 0x02) == 0x02)
+    {
+      Counter++;
+      //Clear timer register
+      TCNT2 = 0x00;
+      //Clear compare flag
+      TIFR2 = 0x02;
+    }
+  }
+}
